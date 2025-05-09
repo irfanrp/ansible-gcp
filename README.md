@@ -28,7 +28,7 @@ As required in deliverables:
 
 ## 🔥 Firewall/Network Requirements
 
-Agar cluster Kubernetes berjalan normal, pastikan port berikut terbuka:
+Please open Firewall First 
 
 | Port               | Direction | Node Target   | Kegunaan                                 |
 |-------------------|-----------|---------------|------------------------------------------|
@@ -63,6 +63,7 @@ gcloud compute firewall-rules create kubernetes-allow-controller-manager \
 
 gcloud compute firewall-rules create kubernetes-allow-nodeport \
   --allow tcp:30000-32767 --target-tags=kubernetes --description="Allow NodePort range" --direction=INGRESS
+  
 ---
 
 ## ⚙️ **How to deploy**
@@ -75,3 +76,7 @@ ansible-playbook -i inventory/hosts.ini playbooks/init-master.yml
 ansible-playbook -i inventory/hosts.ini playbooks/join-workers.yml
 ansible-playbook -i inventory/hosts.ini playbooks/deploy-nginx.yml
 
+---
+
+How to Access: 
+http://35.184.241.128:31560/ -> worker1
