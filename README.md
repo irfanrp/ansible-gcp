@@ -78,5 +78,5 @@ ansible-playbook -i inventory/hosts.ini playbooks/deploy-nginx.yml
 
 ---
 
-How to Access: 
+## ⚙️ **How to Access**
 http://35.184.241.128:31560/ -> worker1
