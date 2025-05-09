@@ -1,0 +1,79 @@
+- hosts: master
+  become: true
+  tasks:
+    - name: Copy kubeadm config (static file, no template)
+      copy:
+        src: ../templates/kubeadm-config.yaml
+        dest: /root/kubeadm-config.yaml
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Check if admin.conf exists
+      stat:
+        path: /etc/kubernetes/admin.conf
+      register: admin_conf_stat
+
+    - name: Reset kubeadm only if admin.conf missing
+      shell: kubeadm reset -f
+      when: not admin_conf_stat.stat.exists
+      ignore_errors: true
+
+    - name: Initialize Kubernetes Master
+      command: kubeadm init --config=/root/kubeadm-config.yaml
+      args:
+        creates: /etc/kubernetes/admin.conf
+
+    - name: Create kube directory for ubuntu
+      file:
+        path: /home/ubuntu/.kube
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+        mode: '0755'
+
+    - name: Copy kubeconfig to ubuntu user
+      copy:
+        src: /etc/kubernetes/admin.conf
+        dest: /home/ubuntu/.kube/config
+        remote_src: yes
+        owner: ubuntu
+        group: ubuntu
+        mode: '0644'
+
+    - name: Create kube directory for root
+      file:
+        path: /root/.kube
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Copy kubeconfig to root user
+      copy:
+        src: /etc/kubernetes/admin.conf
+        dest: /root/.kube/config
+        remote_src: yes
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Install Calico network plugin
+      shell: |
+        KUBECONFIG=/home/ubuntu/.kube/config kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
+      args:
+        creates: /etc/cni/net.d/calico-kubeconfig
+
+    - name: Generate join command only if not exists
+      shell: kubeadm token create --print-join-command
+      args:
+        creates: /tmp/kubeadm_join_cmd.sh
+      register: join_command
+
+    - name: Save join command to file
+      copy:
+        content: "{{ join_command.stdout }}"
+        dest: /tmp/kubeadm_join_cmd.sh
+        owner: root
+        group: root
+        mode: '0755'

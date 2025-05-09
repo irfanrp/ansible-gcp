@@ -1,0 +1,22 @@
+- hosts: master
+  become: true
+  tasks:
+    - name: Check if hello-world deployment exists
+      command: kubectl get deployment hello-world --no-headers
+      register: deployment_check
+      failed_when: false
+      changed_when: false
+
+    - name: Deploy nginx app if not exists
+      command: kubectl create deployment hello-world --image=nginx
+      when: deployment_check.rc != 0
+
+    - name: Check if hello-world service exists
+      command: kubectl get service hello-world --no-headers
+      register: service_check
+      failed_when: false
+      changed_when: false
+
+    - name: Expose nginx via NodePort if service not exists
+      command: kubectl expose deployment hello-world --port=80 --type=NodePort
+      when: service_check.rc != 0
